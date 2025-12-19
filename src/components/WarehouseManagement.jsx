@@ -94,7 +94,7 @@ const WarehouseManagement = () => {
   };
 
   return (
-    <div className="border-t pt-8 mt-8">
+    <div className="">
       <h1 className="text-2xl font-bold mb-4">Warehouse Management</h1>
 
       {/* Add Warehouse Button */}
