@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import MaterialTable from "./MaterialTable";
 import * as XLSX from "xlsx";
 import { validateMaterial } from "../utils/materialValidation";
+import { toast } from "react-toastify";
 
 export default function MaterialManagement({ 
   materials, 
@@ -54,40 +55,65 @@ export default function MaterialManagement({
   };
 
   // Bulk Upload
-  const handleBulkUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+ const handleBulkUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = e => {
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    try {
       const arrayBuffer = e.target.result;
-      try {
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        let rows = XLSX.utils.sheet_to_json(sheet);
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
 
-        const invalidRows = rows.filter(row => Object.keys(validateMaterial(row)).length > 0);
-        if (invalidRows.length > 0) {
-          alert("Some rows in Excel are invalid. Please correct them.");
-          return;
-        }
+      // ❌ Validation failed
+      const invalidRows = rows.filter(
+        row => Object.keys(validateMaterial(row)).length > 0
+      );
 
-        const newData = [...materials, ...rows];
-        const uniqueMaterials = newData.filter(
-          (item, index, arr) =>
-            index === arr.findIndex(t => t.Product_ID === item.Product_ID)
-        );
-
-        setMaterials(uniqueMaterials);
-        alert(`${rows.length} materials added successfully!`);
-      } catch (err) {
-        console.error(err);
-        alert("Invalid Excel file.");
+      if (invalidRows.length > 0) {
+        toast.error("Some rows in Excel are invalid. Please fix them.");
+        return;
       }
-    };
 
-    reader.readAsArrayBuffer(file);
+      // ✅ Update UI state
+      const newData = [...materials, ...rows];
+      const uniqueMaterials = newData.filter(
+        (item, index, arr) =>
+          index === arr.findIndex(t => t.Product_ID === item.Product_ID)
+      );
+      setMaterials(uniqueMaterials);
+
+      toast.info("Uploading file to server...");
+
+      // ✅ Upload to backend
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("http://127.0.0.1:8000/api/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const result = await response.json();
+      toast.success(`Upload successful! ${result.rows} rows stored`);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Invalid Excel file or server error.");
+    }
   };
+
+  reader.readAsArrayBuffer(file);
+};
+
+
 
   if (!isVisible) return null;
 

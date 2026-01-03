@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Sidebar from "./components/Sidebar";
 
@@ -25,6 +27,17 @@ export default function App() {
           <Route path="/distribution" element={<DistributionReport />} />
         </Routes>
       </div>
+
+      {/* ✅ Toast container (global) */}
+      <ToastContainer
+        position="top-right"
+        autoClose={8000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </Router>
   );
 }
