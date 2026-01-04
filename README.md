@@ -1,3 +1,7 @@
+--> git clone https://github.com/sambhav2917/Project-pro-.git
+
+--> go inside the project 
+
 Install dependencies
 --> npm install
 
